@@ -311,9 +311,10 @@ goto :EOF
 
 :ConfigSCM
 echo Generating config from SCM templates
-sed -n "s/^AC_INIT(\[GNU make\],\[\([^]]\+\)\].*/s,%%VERSION%%,\1,g/p" configure.ac > %OUTDIR%\src\config.h.W32.sed
-echo s,%%PACKAGE%%,make,g >> %OUTDIR%\src\config.h.W32.sed
-sed -f %OUTDIR%\src\config.h.W32.sed src\config.h.W32.template > src\config.h.W32
+REM sed -n "s/^AC_INIT(\[GNU make\],\[\([^]]\+\)\].*/s,%%VERSION%%,\1,g/p" configure.ac > %OUTDIR%\src\config.h.W32.sed
+REM echo s/%%PACKAGE%%/make/g >> %OUTDIR%\src\config.h.W32.sed
+REM sed -f %OUTDIR%\src\config.h.W32.sed src\config.h.W32.template > src\config.h.W32
+powershell.exe .\gen_config.ps1 -outdir %OUTDIR% -outfile src\config.h.W32
 echo static const char *const GUILE_module_defn = ^" \ > src\gmk-default.h
 sed -e "s/;.*//" -e "/^[ \t]*$/d" -e "s/\"/\\\\\"/g" -e "s/$/ \\\/" src\gmk-default.scm >> src\gmk-default.h
 echo ^";>> src\gmk-default.h

@@ -216,3 +216,7 @@ fd_noinherit(int fd)
   if (fh && fh != INVALID_HANDLE_VALUE)
         SetHandleInformation(fh, HANDLE_FLAG_INHERIT, 0);
 }
+void sleep(int seconds)
+{
+	Sleep(seconds*1000);
+}
