@@ -1,5 +1,5 @@
 /* Definitions for managing subprocesses in GNU Make.
-Copyright (C) 1992-2019 Free Software Foundation, Inc.
+Copyright (C) 1992-2020 Free Software Foundation, Inc.
 This file is part of GNU Make.
 
 GNU Make is free software; you can redistribute it and/or modify it under the
@@ -29,7 +29,7 @@ this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif
 
 #define CHILDBASE                                               \
-    char *cmd_name;       /* Alloced copy of command run.  */   \
+    char *cmd_name;       /* Allocated copy of command run.  */ \
     char **environment;   /* Environment for commands. */       \
     VMSCHILD                                                    \
     struct output output  /* Output for this child.  */
@@ -80,11 +80,11 @@ char **construct_command_argv (char *line, char **restp, struct file *file,
 pid_t child_execute_job (struct childbase *child, int good_stdin, char **argv);
 
 #ifdef _AMIGA
-void exec_command (char **argv) __attribute__ ((noreturn));
+void exec_command (char **argv) NORETURN;
 #elif defined(__EMX__)
 int exec_command (char **argv, char **envp);
 #else
-void exec_command (char **argv, char **envp) __attribute__ ((noreturn));
+void exec_command (char **argv, char **envp) NORETURN;
 #endif
 
 void unblock_all_sigs (void);

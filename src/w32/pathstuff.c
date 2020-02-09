@@ -1,5 +1,5 @@
 /* Path conversion for Windows pathnames.
-Copyright (C) 1996-2019 Free Software Foundation, Inc.
+Copyright (C) 1996-2020 Free Software Foundation, Inc.
 This file is part of GNU Make.
 
 GNU Make is free software; you can redistribute it and/or modify it under the
@@ -177,7 +177,7 @@ convert_path_to_nutc(char *path)
         *pathp = '\0';
 
         /*
-         * Loop through PATH and convert one elemnt of the path at at
+         * Loop through PATH and convert one element of the path at at
          * a time. Single file pathnames will fail this and fall
          * to the logic below loop.
          */

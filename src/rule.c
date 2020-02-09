@@ -1,5 +1,5 @@
 /* Pattern and suffix rule internals for GNU Make.
-Copyright (C) 1988-2019 Free Software Foundation, Inc.
+Copyright (C) 1988-2020 Free Software Foundation, Inc.
 This file is part of GNU Make.
 
 GNU Make is free software; you can redistribute it and/or modify it under the
@@ -60,29 +60,38 @@ struct file *suffix_file;
 
 static size_t maxsuffix;
 
-/* Compute the maximum dependency length and maximum number of
-   dependencies of all implicit rules.  Also sets the subdir
-   flag for a rule when appropriate, possibly removing the rule
-   completely when appropriate.  */
+/* Compute the maximum dependency length and maximum number of dependencies of
+   all implicit rules.  Also sets the subdir flag for a rule when appropriate,
+   possibly removing the rule completely when appropriate.
+
+   Add any global EXTRA_PREREQS here as well.  */
 
 void
-count_implicit_rule_limits (void)
+snap_implicit_rules (void)
 {
-  char *name;
-  size_t namelen;
+  char *name = NULL;
+  size_t namelen = 0;
   struct rule *rule;
+  struct dep *dep;
+  struct dep *prereqs = expand_extra_prereqs (lookup_variable (STRING_SIZE_TUPLE(".EXTRA_PREREQS")));
+  unsigned int pre_deps = 0;
 
-  num_pattern_rules = max_pattern_targets = max_pattern_deps = 0;
   max_pattern_dep_length = 0;
 
-  name = 0;
-  namelen = 0;
-  rule = pattern_rules;
-  while (rule != 0)
+  for (dep = prereqs; dep; dep = dep->next)
     {
-      unsigned int ndeps = 0;
-      struct dep *dep;
-      struct rule *next = rule->next;
+      size_t l = strlen (dep_name (dep));
+      if (l > max_pattern_dep_length)
+        max_pattern_dep_length = l;
+      ++pre_deps;
+    }
+
+  num_pattern_rules = max_pattern_targets = max_pattern_deps = 0;
+
+  for (rule = pattern_rules; rule; rule = rule->next)
+    {
+      unsigned int ndeps = pre_deps;
+      struct dep *lastdep = NULL;
 
       ++num_pattern_rules;
 
@@ -99,17 +108,20 @@ count_implicit_rule_limits (void)
           const char *p2;
           if (p == 0)
             p = strrchr (dname, ':');
-          p2 = p != 0 ? strchr (dname, '%') : 0;
+          p2 = p ? strchr (p, '%') : 0;
 #else
           const char *p = strrchr (dname, '/');
-          const char *p2 = p != 0 ? strchr (dname, '%') : 0;
+          const char *p2 = p ? strchr (p, '%') : 0;
 #endif
           ndeps++;
 
           if (len > max_pattern_dep_length)
             max_pattern_dep_length = len;
 
-          if (p != 0 && p2 > p)
+          if (!dep->next)
+            lastdep = dep;
+
+          if (p2)
             {
               /* There is a slash before the % in the dep name.
                  Extract the directory name.  */
@@ -134,13 +146,20 @@ count_implicit_rule_limits (void)
             dep->changed = 0;
         }
 
+      if (prereqs)
+        {
+          if (lastdep)
+            lastdep->next = copy_dep_chain (prereqs);
+          else
+            rule->deps = copy_dep_chain (prereqs);
+        }
+
       if (ndeps > max_pattern_deps)
         max_pattern_deps = ndeps;
-
-      rule = next;
     }
 
   free (name);
+  free_dep_chain (prereqs);
 }
 
 /* Create a pattern rule from a suffix rule.
@@ -253,10 +272,22 @@ convert_to_pattern (void)
           memcpy (rulename + slen, dep_name (d2), s2len + 1);
           f = lookup_file (rulename);
 
-          /* No target, or no commands, or it has deps: it can't be a
-             suffix rule.  */
-          if (f == 0 || f->cmds == 0 || f->deps != 0)
+          /* No target, or no commands: it can't be a suffix rule.  */
+          if (f == 0 || f->cmds == 0)
             continue;
+
+          /* POSIX says that suffix rules can't have prerequisites.
+             In POSIX mode, don't make this a suffix rule.  Previous versions
+             of GNU make did treat this as a suffix rule and ignored the
+             prerequisites, which is bad.  In the future we'll do the same as
+             POSIX, but for now preserve the old behavior and warn about it.  */
+          if (f->deps != 0)
+            {
+              if (posix_pedantic)
+                continue;
+              error (&f->cmds->fileinfo, 0,
+                     _("warning: ignoring prerequisites on suffix rule definition"));
+            }
 
           if (s2len == 2 && rulename[slen] == '.' && rulename[slen + 1] == 'a')
             /* A suffix rule '.X.a:' generates the pattern rule '(%.o): %.X'.

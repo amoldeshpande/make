@@ -1,5 +1,5 @@
 /* Argument parsing and main program of GNU Make.
-Copyright (C) 1988-2019 Free Software Foundation, Inc.
+Copyright (C) 1988-2020 Free Software Foundation, Inc.
 This file is part of GNU Make.
 
 GNU Make is free software; you can redistribute it and/or modify it under the
@@ -96,7 +96,7 @@ int chdir ();
 #endif
 #ifndef STDC_HEADERS
 # ifndef sun                    /* Sun has an incorrect decl in a header.  */
-void exit (int) __attribute__ ((noreturn));
+void exit (int) NORETURN;
 # endif
 double atof ();
 #endif
@@ -1313,7 +1313,7 @@ main (int argc, char **argv, char **envp)
   {
     const char *features = "target-specific order-only second-expansion"
                            " else-if shortest-stem undefine oneshell nocomment"
-                           " grouped-target"
+                           " grouped-target extra-prereqs"
 #ifndef NO_ARCHIVES
                            " archives"
 #endif
@@ -2134,9 +2134,9 @@ main (int argc, char **argv, char **envp)
 
   install_default_implicit_rules ();
 
-  /* Compute implicit rule limits.  */
+  /* Compute implicit rule limits and do magic for pattern rules.  */
 
-  count_implicit_rule_limits ();
+  snap_implicit_rules ();
 
   /* Construct the listings of directories in VPATH lists.  */
 
@@ -3370,7 +3370,7 @@ print_version (void)
      year, and none of the rest of it should be translated (including the
      word "Copyright"), so it hardly seems worth it.  */
 
-  printf ("%sCopyright (C) 1988-2019 Free Software Foundation, Inc.\n",
+  printf ("%sCopyright (C) 1988-2020 Free Software Foundation, Inc.\n",
           precede);
 
   printf (_("%sLicense GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n\

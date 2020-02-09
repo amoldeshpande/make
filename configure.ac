@@ -1,6 +1,6 @@
 # Process this file with autoconf to produce a configure script.
 #
-# Copyright (C) 1993-2019 Free Software Foundation, Inc.
+# Copyright (C) 1993-2020 Free Software Foundation, Inc.
 # This file is part of GNU Make.
 #
 # GNU Make is free software; you can redistribute it and/or modify it under
@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License along with
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
-AC_INIT([GNU make],[4.2.92],[bug-make@gnu.org])
+AC_INIT([GNU make],[4.3.90],[bug-make@gnu.org])
 
 AC_PREREQ([2.69])
 
@@ -138,7 +138,7 @@ AS_IF([test "$ac_cv_func_gettimeofday" = yes],
             [Define to 1 if you have a standard gettimeofday function])
 ])
 
-AC_CHECK_FUNCS([strdup strndup umask mkstemp mktemp fdopen \
+AC_CHECK_FUNCS([strdup strndup memrchr umask mkstemp mktemp fdopen \
                 dup dup2 getcwd realpath sigsetmask sigaction \
                 getgroups seteuid setegid setlinebuf setreuid setregid \
                 getrlimit setrlimit setvbuf pipe strsignal \
@@ -176,7 +176,7 @@ AC_ARG_WITH([guile], [AS_HELP_STRING([--with-guile],
 PKG_PROG_PKG_CONFIG
 
 AS_IF([test "x$with_guile" != xno],
-[ guile_versions="2.2 2.0 1.8"
+[ guile_versions="3.0 2.2 2.0 1.8"
   guile_version=no
   have_guile=no
   AC_MSG_CHECKING([for GNU Guile])
@@ -184,13 +184,21 @@ AS_IF([test "x$with_guile" != xno],
     PKG_CHECK_EXISTS([guile-$v], [guile_version=$v; have_guile=yes; break], [])
   done
   AC_MSG_RESULT([$guile_version])
-  if test "$have_guile" = yes; then
-    PKG_CHECK_MODULES(GUILE, [guile-$guile_version])
-    AC_DEFINE([HAVE_GUILE], [1], [Embed GNU Guile support])
-  fi
+  AS_IF([test "$have_guile" = yes],
+  [ PKG_CHECK_MODULES(GUILE, [guile-$guile_version])
+    # Unfortunately Guile requires a C99 compiler but GNU make doesn't, so
+    # verify we can actually compile the header.
+    keep_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS $pkg_cv_GUILE_CFLAGS"
+    AC_CHECK_HEADER([libguile.h],
+                    [AC_DEFINE([HAVE_GUILE], [1], [Embed GNU Guile support])],
+                    [have_guile=no],
+                    [/* Avoid configuration error warnings. */])
+    CPPFLAGS="$keep_CPPFLAGS"
+  ])
 ])
 
-AM_CONDITIONAL([HAVE_GUILE], [test "$have_guile" = yes])
+AM_CONDITIONAL([HAVE_GUILE], [test "$have_guile" = "yes"])
 
 AC_CHECK_DECLS([sys_siglist, _sys_siglist, __sys_siglist], , ,
   [AC_INCLUDES_DEFAULT
@@ -371,7 +379,28 @@ AC_ARG_ENABLE([posix-spawn],
 AS_CASE([/$ac_cv_header_spawn/$ac_cv_func_posix_spawn/],
   [*/no/*], [make_cv_posix_spawn=no])
 
-AS_CASE([/$make_cv_posix_spawn/$user_posix_spawn/],
+AS_IF([test "$make_cv_posix_spawn" = yes],
+  AC_CACHE_CHECK([for posix_spawn that fails synchronously],
+    [make_cv_synchronous_posix_spawn],
+    [make_cv_synchronous_posix_spawn=no
+     AC_RUN_IFELSE([AC_LANG_SOURCE([[
+       #include <spawn.h>
+       #include <string.h>
+
+       extern char **environ;
+
+       int main() {
+         char* path = strdup("./non-existent");
+         char *argv[[2]];
+         argv[[0]] = path;
+         argv[[1]] =  0;
+         return posix_spawn(0, path, 0, 0, argv, environ);
+       }]])],
+       [make_cv_synchronous_posix_spawn=no],
+       [make_cv_synchronous_posix_spawn=yes],
+       [make_cv_synchronous_posix_spawn="no (cross-compiling)"])]))
+
+AS_CASE([/$user_posix_spawn/$make_cv_posix_spawn/$make_cv_synchronous_posix_spawn/],
   [*/no/*], [make_cv_posix_spawn=no],
   [AC_DEFINE(USE_POSIX_SPAWN, 1, [Define to 1 to use posix_spawn().])
   ])

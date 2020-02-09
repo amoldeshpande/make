@@ -11,7 +11,7 @@
 #                         [-make <make prog>]
 #                        (and others)
 
-# Copyright (C) 1992-2019 Free Software Foundation, Inc.
+# Copyright (C) 1992-2020 Free Software Foundation, Inc.
 # This file is part of GNU Make.
 #
 # GNU Make is free software; you can redistribute it and/or modify it under
@@ -30,6 +30,8 @@
 # Add the working directory to @INC and load the test driver
 use FindBin;
 use lib "$FindBin::Bin";
+
+our $testsroot = $FindBin::Bin;
 
 require "test_driver.pl";
 
@@ -52,10 +54,12 @@ $pure_log = undef;
 
 # The location of the GNU make source directory
 $srcdir = undef;
+$fqsrcdir = undef;
 $srcvol = undef;
 
 # The location of the build directory
 $blddir = undef;
+$fqblddir = undef;
 $bldvol = undef;
 
 $make_path = undef;
@@ -216,7 +220,11 @@ sub valid_option
 #  [2] (string):  Answer we should get back.
 #  [3] (integer): Exit code we expect.  A missing code means 0 (success)
 
+$makefile = undef;
 $old_makefile = undef;
+$mkpath = undef;
+$make_name = undef;
+$helptool = undef;
 
 sub subst_make_string
 {
@@ -226,6 +234,8 @@ sub subst_make_string
     s/#MAKE#/$make_name/g;
     s/#PERL#/$perl_name/g;
     s/#PWD#/$cwdpath/g;
+    # If we're using a shell
+    s/#HELPER#/$perl_name $helptool/g;
     return $_;
 }
 
@@ -603,6 +613,18 @@ sub set_more_defaults
     /^abs_srcdir\s*=\s*(.*?)\s*$/m;
     -f File::Spec->catfile($1, 'src', 'gnumake.h') and $srcdir = $1;
   }
+
+  # At this point we should have srcdir and blddir: get fq versions
+  $fqsrcdir = File::Spec->rel2abs($srcdir);
+  $fqblddir = File::Spec->rel2abs($blddir);
+
+  # Find the helper tool
+  $helptool = File::Spec->catfile($fqsrcdir, 'tests', 'thelp.pl');
+
+  # It's difficult to quote this properly in all the places it's used so
+  # ensure it doesn't need to be quoted.
+  $helptool =~ s,\\,/,g if $port_type eq 'W32';
+  $helptool =~ s, ,\\ ,g;
 
   # Get Purify log info--if any.
 

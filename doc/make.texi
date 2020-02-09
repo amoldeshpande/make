@@ -3,7 +3,7 @@
 @setfilename make.info
 
 @include version.texi
-@set EDITION 0.74
+@set EDITION 0.75
 
 @settitle GNU @code{make}
 @setchapternewpage odd
@@ -26,8 +26,8 @@ of @cite{The GNU Make Manual}, for GNU @code{make} version @value{VERSION}.
 
 Copyright @copyright{} 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
 1996, 1997, 1998, 1999, 2000, 2002, 2003, 2004, 2005, 2006, 2007,
-2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019
-Free Software Foundation, Inc.
+2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
+2020 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -1932,8 +1932,8 @@ more recent than it.
 @item
 How to update the file @file{foo.o}: by running @code{cc} as stated.
 The recipe does not explicitly mention @file{defs.h}, but we presume
-that @file{foo.c} includes it, and that that is why @file{defs.h} was
-added to the prerequisites.
+that @file{foo.c} includes it, and that is why @file{defs.h} was added
+to the prerequisites.
 @end itemize
 @end ifnottex
 
@@ -4533,6 +4533,19 @@ target is updated in some atomic fashion, or exists only to record a
 modification-time (its contents do not matter), or must exist at all
 times to prevent other sorts of trouble.
 
+Although @code{make} does its best to clean up there are certain situations
+in which cleanup is impossible.  For example, @code{make} may be killed by
+an uncatchable signal.  Or, one of the programs make invokes may be killed
+or crash, leaving behind an up-to-date but corrupt target file: @code{make}
+will not realize that this failure requires the target to be cleaned.  Or
+@code{make} itself may encounter a bug and crash.
+
+For these reasons it's best to write @emph{defensive recipes}, which won't
+leave behind corrupted targets even if they fail.  Most commonly these
+recipes create temporary files rather than updating the target directly,
+then rename the temporary file to the final target name.  Some compilers
+already behave this way, so that you don't need to write a defensive recipe.
+
 @node Recursion, Canned Recipes, Interrupts, Recipes
 @section Recursive Use of @code{make}
 @cindex recursion
@@ -6630,6 +6643,57 @@ Supports dynamically loadable objects for creating custom extensions.
 @item .INCLUDE_DIRS
 Expands to a list of directories that @code{make} searches for
 included makefiles (@pxref{Include, , Including Other Makefiles}).
+
+@vindex .EXTRA_PREREQS @r{(prerequisites not added to automatic variables)}
+@item .EXTRA_PREREQS
+Each word in this variable is a new prerequisite which is added to
+targets for which it is set.  These prerequisites differ from normal
+prerequisites in that they do not appear in any of the automatic
+variables (@pxref{Automatic Variables}).  This allows prerequisites to
+be defined which do not impact the recipe.
+
+Consider a rule to link a program:
+
+@example
+myprog: myprog.o file1.o file2.o
+       $(CC) $(CFLAGS) $(LDFLAGS) -o $@@ $^ $(LDLIBS)
+@end example
+
+Now suppose you want to enhance this makefile to ensure that updates
+to the compiler cause the program to be re-linked.  You can add the
+compiler as a prerequisite, but you must ensure that it's not passed
+as an argument to link command.  You'll need something like this:
+
+@example
+myprog: myprog.o file1.o file2.o $(CC)
+       $(CC) $(CFLAGS) $(LDFLAGS) -o $@@ $(filter-out $(CC),$^) $(LDLIBS)
+@end example
+
+Then consider having multiple extra prerequisites: they would all have
+to be filtered out.  Using @code{.EXTRA_PREREQS} and target-specific
+variables provides a simpler solution:
+
+@example
+myprog: myprog.o file1.o file2.o
+       $(CC) $(CFLAGS) $(LDFLAGS) -o $@@ $^ $(LDLIBS)
+myprog: .EXTRA_PREREQS = $(CC)
+@end example
+
+This feature can also be useful if you want to add prerequisites to a
+makefile you cannot easily modify: you can create a new file such as
+@file{extra.mk}:
+
+@example
+myprog: .EXTRA_PREREQS = $(CC)
+@end example
+
+then invoke @code{make -f extra.mk -f Makefile}.
+
+Setting @code{.EXTRA_PREREQS} globally will cause those prerequisites
+to be added to all targets (which did not themselves override it with
+a target-specific value).  Note @code{make} is smart enough not to add
+a prerequisite listed in @code{.EXTRA_PREREQS} as a prerequisite to
+itself.
 
 @end table
 
@@ -9867,6 +9931,10 @@ and linking with a single @code{cc} command.  The optimized rule is used in
 preference to the step-by-step chain because it comes earlier in the
 ordering of rules.
 
+Finally, for performance reasons @code{make} will not consider non-terminal
+match-anything rules (i.e., @samp{%:}) when searching for a rule to
+build a prerequisite of an implicit rule (@pxref{Match-Anything Rules}).
+
 @node Pattern Rules, Last Resort, Chained Rules, Implicit Rules
 @section Defining and Redefining Pattern Rules
 
@@ -10356,9 +10424,10 @@ remade from any other files; therefore, @code{make} can save time by not
 looking for ways to remake them.@refill
 
 If you do not mark the match-anything rule as terminal, then it is
-non-terminal.  A non-terminal match-anything rule cannot apply to a file name
-that indicates a specific type of data.  A file name indicates a specific
-type of data if some non-match-anything implicit rule target matches it.
+non-terminal.  A non-terminal match-anything rule cannot apply to a
+prerequisite of an implicit rule, or to a file name that indicates a
+specific type of data.  A file name indicates a specific type of data
+if some non-match-anything implicit rule target matches it.
 
 For example, the file name @file{foo.c} matches the target for the pattern
 rule @samp{%.c : %.y} (the rule to run Yacc).  Regardless of whether this
@@ -10595,8 +10664,9 @@ Make a list of all the pattern rules one of whose targets matches
 matched against @var{t}; otherwise, against @var{n}.
 
 @item
-If any rule in that list is @emph{not} a match-anything rule, then
-remove all non-terminal match-anything rules from the list.
+If any rule in that list is @emph{not} a match-anything rule, or if
+@var{t} is a prerequisite of an implicit rule, then remove all
+non-terminal match-anything rules from the list.
 
 @item
 Remove from the list all rules with no recipe.
@@ -12680,6 +12750,18 @@ receive only part of the information necessary.  In this case, the child
 will generate this warning message and proceed with its build in a
 sequential manner.
 
+@item warning: ignoring prerequisites on suffix rule definition
+According to POSIX, a suffix rule cannot contain prerequisites.  If a rule
+that could be a suffix rule has prerequisites it is interpreted as a simple
+explicit rule, with an odd target name.  This requirement is obeyed when
+POSIX-conforming mode is enabled (the @code{.POSIX} target is defined).  In
+versions of GNU @code{make} prior to 4.3, no warning was emitted and a
+suffix rule was created, however all prerequisites were ignored and were not
+part of the suffix rule.  Starting with GNU @code{make} 4.3 the behavior is
+the same, and in addition this warning is generated.  In a future version
+the POSIX-conforming behavior will be the only behavior: no rule with a
+prerequisite can be suffix rule and this warning will be removed.
+
 @end table
 
 @node Complex Makefile, GNU Free Documentation License, Error Messages, Top
@@ -12962,7 +13044,7 @@ tar.zoo: $(SRCS) $(AUX)
 @end example
 
 @node GNU Free Documentation License, Concept Index, Complex Makefile, Top
-@appendixsec GNU Free Documentation License
+@appendix GNU Free Documentation License
 @cindex FDL, GNU Free Documentation License
 @include fdl.texi
 

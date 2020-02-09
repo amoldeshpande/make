@@ -1,5 +1,5 @@
 /* Internals of variables for GNU Make.
-Copyright (C) 1988-2019 Free Software Foundation, Inc.
+Copyright (C) 1988-2020 Free Software Foundation, Inc.
 This file is part of GNU Make.
 
 GNU Make is free software; you can redistribute it and/or modify it under the
@@ -212,9 +212,9 @@ define_variable_in_set (const char *name, size_t length,
 
 #ifdef VMS
   /* VMS does not populate envp[] with DCL symbols and logical names which
-     historically are mapped to environent variables.
+     historically are mapped to environment variables.
      If the variable is not yet defined, then we need to check if getenv()
-     can find it.  Do not do this for origin == o_env to avoid infinte
+     can find it.  Do not do this for origin == o_env to avoid infinite
      recursion */
   if (HASH_VACANT (v) && (origin != o_env))
     {
@@ -475,8 +475,9 @@ lookup_variable (const char *name, size_t length)
     }
 
 #ifdef VMS
-  /* VMS does not populate envp[] with DCL symbols and logical names which
-     historically are mapped to enviroment varables and returned by getenv() */
+  /* VMS doesn't populate envp[] with DCL symbols and logical names, which
+     historically are mapped to environment variables and returned by
+     getenv().  */
   {
     char *vname = alloca (length + 1);
     char *value;

@@ -1,6 +1,6 @@
 # This is a -*-Makefile-*-, or close enough
 #
-# Copyright (C) 1997-2019 Free Software Foundation, Inc.
+# Copyright (C) 1997-2020 Free Software Foundation, Inc.
 # This file is part of GNU Make.
 #
 # GNU Make is free software; you can redistribute it and/or modify it under
@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License along with
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
-AUTOMAKE_OPTIONS = dist-bzip2 silent-rules std-options subdir-objects nostdinc
+AUTOMAKE_OPTIONS = dist-lzip silent-rules std-options subdir-objects nostdinc
 ACLOCAL_AMFLAGS = -I m4
 
 MAKE_HOST =	@MAKE_HOST@
@@ -95,7 +95,7 @@ test_FILES =	tests/run_make_tests tests/run_make_tests.bat \
 		tests/run_make_tests.pl tests/test_driver.pl \
 		tests/config-flags.pm.in tests/config_flags_pm.com \
 		tests/config-flags.pm.W32 \
-		tests/mkshadow tests/jhelp.pl tests/guile.supp tests/README
+		tests/mkshadow tests/thelp.pl tests/guile.supp tests/README
 # test/scripts are added via dist-hook below.
 
 EXTRA_DIST =	ChangeLog README build.sh build.cfg.in $(man_MANS) \

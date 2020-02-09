@@ -1,5 +1,5 @@
 /* Reading and parsing of makefiles for GNU Make.
-Copyright (C) 1988-2019 Free Software Foundation, Inc.
+Copyright (C) 1988-2020 Free Software Foundation, Inc.
 This file is part of GNU Make.
 
 GNU Make is free software; you can redistribute it and/or modify it under the
@@ -3138,7 +3138,10 @@ parse_file_seq (char **stringp, size_t size, int stopmap,
   char *p;
   glob_t gl;
   char *tp;
-  int findmap = stopmap|MAP_VMSCOMMA|MAP_BLANK|MAP_NUL;
+  int findmap = stopmap|MAP_VMSCOMMA|MAP_NUL;
+
+  if (NONE_SET (flags, PARSEFS_ONEWORD))
+    findmap |= MAP_BLANK;
 
   /* Always stop on NUL.  */
   stopmap |= MAP_NUL;
@@ -3212,10 +3215,10 @@ parse_file_seq (char **stringp, size_t size, int stopmap,
       /* Strip leading "this directory" references.  */
       if (NONE_SET (flags, PARSEFS_NOSTRIP))
 #ifdef VMS
-        /* Skip leading '[]'s. should only be one set or bug somwhere else */
+        /* Skip leading '[]'s. should only be one set or bug somewhere else */
         if (p - s > 2 && s[0] == '[' && s[1] == ']')
             s += 2;
-        /* Skip leading '<>'s. should only be one set or bug somwhere else */
+        /* Skip leading '<>'s. should only be one set or bug somewhere else */
         if (p - s > 2 && s[0] == '<' && s[1] == '>')
             s += 2;
 #endif

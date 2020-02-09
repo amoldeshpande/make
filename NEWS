@@ -1,6 +1,6 @@
 GNU make NEWS                                               -*-indented-text-*-
   History of user-visible changes.
-  8 October 2019
+  20 January 2020
 
 See the end of this file for copyrights and conditions.
 
@@ -9,11 +9,18 @@ which is contained in this distribution as the file doc/make.texi.
 See the README file and the GNU make manual for instructions for
 reporting bugs.
 
-Version 4.2.92 (08 Oct 2019)
+Version 4.3.90 (20 Jan 2020)
 
 A complete list of bugs fixed in this version is available here:
 
-http://sv.gnu.org/bugs/index.php?group=make&report_id=111&fix_release_id=108&set=custom
+https://sv.gnu.org/bugs/index.php?group=make&report_id=111&fix_release_id=109&set=custom
+
+
+Version 4.3 (19 Jan 2020)
+
+A complete list of bugs fixed in this version is available here:
+
+https://sv.gnu.org/bugs/index.php?group=make&report_id=111&fix_release_id=108&set=custom
 
 * WARNING: Backward-incompatibility!
   Number signs (#) appearing inside a macro reference or function invocation
@@ -35,18 +42,18 @@ http://sv.gnu.org/bugs/index.php?group=make&report_id=111&fix_release_id=108&set
   already contains some value.  Similarly, appending an empty string does not
   add a trailing space.
 
-* WARNING: Backward-incompatibility!
-  On Linux, and any other systems that provide a /proc/loadavg with similar
-  syntax, the -l/--load-average option will consult that file to determine how
-  many CPUs are busy at that moment and compare that value to the load value
-  requested.  This allows usage such as "-j -lN" for N-processor systems
-  without fear of overload during initial startup.
-  Patch provided by Sven C. Dack <sven.c.dack@sky.com>
-
-* WARNING: Backward-incompatibility!
-  Contrary to the documentation, suffix rules with prerequisites were being
-  treated BOTH as simple targets AND as pattern rules.  Behavior now matches
-  the documentation, and pattern rules are no longer created in this case.
+* NOTE: Deprecated behavior.
+  Contrary to the documentation, suffix rules with prerequisites are being
+  treated BOTH as simple targets AND as pattern rules.  Further, the
+  prerequisites are ignored by the pattern rules.  POSIX specifies that in
+  order to be a suffix rule there can be no prerequisites defined.  In this
+  release if POSIX mode is enabled then rules with prerequisites cannot be
+  suffix rules.  If POSIX mode is not enabled then the previous behavior is
+  preserved (a pattern rule with no extra prerequisites is created) AND a
+  warning about this behavior is generated:
+    warning: ignoring prerequisites on suffix rule definition
+  The POSIX behavior will be adopted as the only behavior in a future release
+  of GNU make so please resolve any warnings.
 
 * New feature: Grouped explicit targets
   Pattern rules have always had the ability to generate multiple targets with
@@ -56,13 +63,21 @@ http://sv.gnu.org/bugs/index.php?group=make&report_id=111&fix_release_id=108&set
   search for 'grouped-target' in the .FEATURES special variable.
   Implementation contributed by Kaz Kylheku <kaz@kylheku.com>
 
+* New feature: .EXTRA_PREREQS variable
+  Words in this variable are considered prerequisites of targets but they are
+  not added to any of the automatic variable values when expanding the
+  recipe.  This variable can either be global (applies to all targets) or
+  a target-specific variable.  To detect this feature search for 'extra-prereqs'
+  in the .FEATURES special variable.
+  Implementation contributed by Christof Warlich <cwarlich@gmx.de>
+
 * Makefiles can now specify the '-j' option in their MAKEFLAGS variable and
   this will cause make to enable that parallelism mode.
 
 * GNU make will now use posix_spawn() on systems where it is available.
   If you prefer to use fork/exec even on systems where posix_spawn() is
-  present, you can use the --disable-posix-spawn option to configure.  Aron
-  Barath <baratharon@caesar.elte.hu> provided the basic implementation.
+  present, you can use the --disable-posix-spawn option to configure.
+  Implementation contributed by Aron Barath <baratharon@caesar.elte.hu>
 
 * Error messages printed when invoking non-existent commands have been cleaned
   up and made consistent.
@@ -100,7 +115,7 @@ Version 4.2.1 (10 Jun 2016)
 
 A complete list of bugs fixed in this version is available here:
 
-http://sv.gnu.org/bugs/index.php?group=make&report_id=111&fix_release_id=107&set=custom
+https://sv.gnu.org/bugs/index.php?group=make&report_id=111&fix_release_id=107&set=custom
 
 This release is a bug-fix release.
 
@@ -109,7 +124,7 @@ Version 4.2 (22 May 2016)
 
 A complete list of bugs fixed in this version is available here:
 
-http://sv.gnu.org/bugs/index.php?group=make&report_id=111&fix_release_id=106&set=custom
+https://sv.gnu.org/bugs/index.php?group=make&report_id=111&fix_release_id=106&set=custom
 
 * New variable: $(.SHELLSTATUS) is set to the exit status of the last != or
   $(shell ...) function invoked in this instance of make.  This will be "0" if
@@ -148,7 +163,7 @@ Version 4.1 (05 Oct 2014)
 
 A complete list of bugs fixed in this version is available here:
 
-http://sv.gnu.org/bugs/index.php?group=make&report_id=111&fix_release_id=105&set=custom
+https://sv.gnu.org/bugs/index.php?group=make&report_id=111&fix_release_id=105&set=custom
 
 * New variables: $(MAKE_TERMOUT) and $(MAKE_TERMERR) are set to non-empty
   values if stdout or stderr, respectively, are believed to be writing to a
@@ -196,7 +211,7 @@ Version 4.0 (09 Oct 2013)
 
 A complete list of bugs fixed in this version is available here:
 
-http://sv.gnu.org/bugs/index.php?group=make&report_id=111&fix_release_id=101&set=custom
+https://sv.gnu.org/bugs/index.php?group=make&report_id=111&fix_release_id=101&set=custom
 
 * WARNING: Backward-incompatibility!
   If .POSIX is specified, then make adheres to the POSIX backslash/newline
@@ -300,7 +315,7 @@ Version 3.82 (28 Jul 2010)
 
 A complete list of bugs fixed in this version is available here:
 
-http://sv.gnu.org/bugs/index.php?group=make&report_id=111&fix_release_id=104&set=custom
+https://sv.gnu.org/bugs/index.php?group=make&report_id=111&fix_release_id=104&set=custom
 
 * Compiling GNU make now requires a conforming ISO C 1989 compiler and
   standard runtime library.
@@ -465,7 +480,7 @@ Version 3.81 (01 Apr 2006)
   might have caused the target to rebuild.  Starting with the _next_
   release of GNU make, '$?' will contain all prerequisites that caused
   the target to be considered out of date.
-  See http://savannah.gnu.org/bugs/?16051
+  See https://savannah.gnu.org/bugs/?16051
 
 * WARNING: Backward-incompatibility!
   GNU make now implements a generic "second expansion" feature on the
@@ -589,7 +604,7 @@ Version 3.81 (01 Apr 2006)
 
 A complete list of bugs fixed in this version is available here:
 
-  http://savannah.gnu.org/bugs/index.php?group=make&report_id=111&fix_release_id=103
+  https://savannah.gnu.org/bugs/index.php?group=make&report_id=111&fix_release_id=103
 
 
 Version 3.80 (03 Oct 2002)
@@ -707,7 +722,7 @@ Version 3.80 (03 Oct 2002)
 
 A complete list of bugs fixed in this version is available here:
 
-  http://savannah.gnu.org/bugs/index.php?group=make&report_id=111&fix_release_id=102
+  https://savannah.gnu.org/bugs/index.php?group=make&report_id=111&fix_release_id=102
 
 
 Version 3.79.1 (23 Jun 2000)
@@ -1611,7 +1626,7 @@ Version 3.05
 (Changes from versions 1 through 3.05 were never recorded.  Sorry.)
 
 -------------------------------------------------------------------------------
-Copyright (C) 1988-2019 Free Software Foundation, Inc.
+Copyright (C) 1988-2020 Free Software Foundation, Inc.
 This file is part of GNU Make.
 
 GNU Make is free software; you can redistribute it and/or modify it under the

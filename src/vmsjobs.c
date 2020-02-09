@@ -1,7 +1,7 @@
 /* --------------- Moved here from job.c ---------------
    This file must be #included in job.c, as it accesses static functions.
 
-Copyright (C) 1996-2019 Free Software Foundation, Inc.
+Copyright (C) 1996-2020 Free Software Foundation, Inc.
 This file is part of GNU Make.
 
 GNU Make is free software; you can redistribute it and/or modify it under the
@@ -331,7 +331,7 @@ posix_parse_sq (struct token_info *token)
 static char *
 posix_parse_dq (struct token_info *token)
 {
-  /* Unix mode:  Any imbedded \" becomes doubled.
+  /* Unix mode:  Any embedded \" becomes doubled.
                  \t is tab, \\, \$ leading character stripped.
                  $ character replaced with \' unless escaped.
   */
@@ -463,7 +463,7 @@ vms_parse_quotes (struct token_info *token)
                 }
               break;
             case '\'':
-              /* Symbol substitution ony in double quotes */
+              /* Symbol substitution only in double quotes */
               if ((p[1] == '\'') && (parse_level[nest] == '"'))
                 {
                   nest++;

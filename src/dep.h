@@ -1,5 +1,5 @@
 /* Definitions of dependency data structures for GNU Make.
-Copyright (C) 1988-2019 Free Software Foundation, Inc.
+Copyright (C) 1988-2020 Free Software Foundation, Inc.
 This file is part of GNU Make.
 
 GNU Make is free software; you can redistribute it and/or modify it under the
@@ -48,7 +48,8 @@ struct nameseq
     unsigned int changed : 1;                   \
     unsigned int ignore_mtime : 1;              \
     unsigned int staticpattern : 1;             \
-    unsigned int need_2nd_expansion : 1
+    unsigned int need_2nd_expansion : 1;        \
+    unsigned int ignore_automatic_vars : 1
 
 struct dep
   {
@@ -74,6 +75,7 @@ struct goaldep
 #define PARSEFS_NOGLOB  0x0004
 #define PARSEFS_EXISTS  0x0008
 #define PARSEFS_NOCACHE 0x0010
+#define PARSEFS_ONEWORD 0x0020
 
 #define PARSE_FILE_SEQ(_s,_t,_c,_p,_f) \
             (_t *)parse_file_seq ((_s),sizeof (_t),(_c),(_p),(_f))
@@ -98,7 +100,7 @@ struct nameseq *ar_glob (const char *arname, const char *member_pattern, size_t 
 #define alloc_seq_elt(_t)   xcalloc (sizeof (_t))
 void free_ns_chain (struct nameseq *n);
 
-#if defined(MAKE_MAINTAINER_MODE) && defined(__GNUC__)
+#if defined(MAKE_MAINTAINER_MODE) && defined(__GNUC__) && !defined(__STRICT_ANSI__)
 /* Use inline to get real type-checking.  */
 #define SI static inline
 SI struct nameseq *alloc_ns()      { return alloc_seq_elt (struct nameseq); }

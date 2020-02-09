@@ -1,5 +1,5 @@
 /* config.h -- hand-massaged for Amiga                                  -*-C-*-
-Copyright (C) 1995-2019 Free Software Foundation, Inc.
+Copyright (C) 1995-2020 Free Software Foundation, Inc.
 This file is part of GNU Make.
 
 GNU Make is free software; you can redistribute it and/or modify it under the
@@ -324,10 +324,10 @@ this program.  If not, see <http://www.gnu.org/licenses/>.  */
 /* Define if you have the sun library (-lsun).  */
 /* #undef HAVE_LIBSUN */
 
-/* Output sync sypport */
+/* Output sync support */
 #define NO_OUTPUT_SYNC
 
-/* Define for Case Insensitve behavior */
+/* Define for Case Insensitive behavior */
 #define HAVE_CASE_INSENSITIVE_FS
 
 /* Build host information. */

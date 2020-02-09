@@ -1,5 +1,5 @@
 /* Job execution and handling for GNU Make.
-Copyright (C) 1988-2019 Free Software Foundation, Inc.
+Copyright (C) 1988-2020 Free Software Foundation, Inc.
 This file is part of GNU Make.
 
 GNU Make is free software; you can redistribute it and/or modify it under the
@@ -2008,7 +2008,18 @@ load_too_high (void)
 #else
   static double last_sec;
   static time_t last_now;
-  static int proc_fd = -2;
+
+  /* This is disabled by default for now, because it will behave badly if the
+     user gives a value > the number of cores; in that situation the load will
+     never be exceeded, this function always returns false, and we'll start
+     all the jobs.  Also, it's not quite right to limit jobs to the number of
+     cores not busy since a job takes some time to start etc.  Maybe that's
+     OK, I'm not sure exactly how to handle that, but for sure we need to
+     clamp this value at the number of cores before this can be enabled.
+   */
+#define PROC_FD_INIT -1
+  static int proc_fd = PROC_FD_INIT;
+
   double load, guess;
   time_t now;
 
@@ -2743,7 +2754,7 @@ construct_command_argv_internal (char *line, char **restp, const char *shell,
   /* We used to have a double quote (") in sh_chars_dos[] below, but
      that caused any command line with quoted file names be run
      through a temporary batch file, which introduces command-line
-     limit of 4K charcaters imposed by cmd.exe.  Since CreateProcess
+     limit of 4K characters imposed by cmd.exe.  Since CreateProcess
      can handle quoted file names just fine, removing the quote lifts
      the limit from a very frequent use case, because using quoted
      file names is commonplace on MS-Windows.  */
@@ -2774,9 +2785,10 @@ construct_command_argv_internal (char *line, char **restp, const char *shell,
 #else  /* must be UNIX-ish */
   static const char *sh_chars = "#;\"*?[]&|<>(){}$`^~!";
   static const char *sh_cmds[] =
-    { ".", ":", "break", "case", "cd", "command", "continue", "eval", "exec",
-      "exit", "export", "for", "if", "login", "logout", "read", "readonly",
-      "set", "shift", "switch", "test", "times", "trap", "ulimit", "umask",
+    { ".", ":", "alias", "bg", "break", "case", "cd", "command", "continue",
+      "eval", "exec", "exit", "export", "fc", "fg", "for", "getopts", "hash",
+      "if", "jobs", "login", "logout", "read", "readonly", "return", "set",
+      "shift", "test", "times", "trap", "type", "ulimit", "umask", "unalias",
       "unset", "wait", "while", 0 };
 
 # ifdef HAVE_DOS_PATHS

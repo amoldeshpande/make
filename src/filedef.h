@@ -1,5 +1,5 @@
 /* Definition of target file data structures for GNU Make.
-Copyright (C) 1988-2019 Free Software Foundation, Inc.
+Copyright (C) 1988-2020 Free Software Foundation, Inc.
 This file is part of GNU Make.
 
 GNU Make is free software; you can redistribute it and/or modify it under the
@@ -20,6 +20,11 @@ this program.  If not, see <http://www.gnu.org/licenses/>.  */
    All of these are chained together through 'next'.  */
 
 #include "hash.h"
+
+struct commands;
+struct dep;
+struct variable;
+struct variable_set_list;
 
 struct file
   {
@@ -110,6 +115,7 @@ struct file *lookup_file (const char *name);
 struct file *enter_file (const char *name);
 struct dep *split_prereqs (char *prereqstr);
 struct dep *enter_prereqs (struct dep *prereqs, const char *stem);
+struct dep *expand_extra_prereqs (const struct variable *extra);
 void remove_intermediates (int sig);
 void snap_deps (void);
 void rename_file (struct file *file, const char *name);

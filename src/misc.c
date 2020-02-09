@@ -1,5 +1,5 @@
 /* Miscellaneous generic support functions for GNU Make.
-Copyright (C) 1988-2019 Free Software Foundation, Inc.
+Copyright (C) 1988-2020 Free Software Foundation, Inc.
 This file is part of GNU Make.
 
 GNU Make is free software; you can redistribute it and/or modify it under the
@@ -24,6 +24,7 @@ this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <stdarg.h>
 
 #ifdef WINDOWS32
+# include <windows.h>
 # include <io.h>
 #endif
 
@@ -260,6 +261,30 @@ xstrndup (const char *str, size_t length)
 
   return result;
 }
+
+#ifndef HAVE_MEMRCHR
+void *
+memrchr(const void* str, int ch, size_t len)
+{
+  const char* sp = str;
+  const char* cp = sp;
+
+  if (len == 0)
+    return NULL;
+
+  cp += len - 1;
+
+  while (cp[0] != ch)
+    {
+      if (cp == sp)
+        return NULL;
+      --cp;
+    }
+
+  return (void*)cp;
+}
+#endif
+
 
 
 /* Limited INDEX:
@@ -407,7 +432,8 @@ free_ns_chain (struct nameseq *ns)
 
 #ifdef MAKE_MAINTAINER_MODE
 
-void spin(const char* type)
+void
+spin (const char* type)
 {
   char filenm[256];
   struct stat dummy;
@@ -418,7 +444,11 @@ void spin(const char* type)
     {
       fprintf (stderr, "SPIN on %s\n", filenm);
       do
+#ifdef WINDOWS32
+        Sleep (1000);
+#else
         sleep (1);
+#endif
       while (stat (filenm, &dummy) == 0);
     }
 }

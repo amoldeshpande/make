@@ -1,5 +1,5 @@
 @echo off
-:: Copyright (C) 2018-2019 Free Software Foundation, Inc.
+:: Copyright (C) 2018-2020 Free Software Foundation, Inc.
 :: This file is part of GNU Make.
 ::
 :: GNU Make is free software; you can redistribute it and/or modify it under
@@ -30,5 +30,5 @@ if ERRORLEVEL 1 exit /b 1
 goto :EOF
 
 :Done
-echo Done.  Run buld_w32.bat to build GNU make.
+echo Done.  Run build_w32.bat to build GNU make.
 goto :EOF
