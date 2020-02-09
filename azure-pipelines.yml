@@ -1,0 +1,34 @@
+# vim:se expandtab ts=4 sw=2 ai
+
+trigger:
+- master
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  buildPlatform: x64
+  buildConfiguration: 'Release'
+
+steps:
+  - script: |
+      for /f "usebackq tokens=*" %%l in (`"c:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -property installationPath`) do set bar=%%l
+      call "%bar%"\Common7\Tools\VsDevCmd.bat -arch=$(BuildPlatform)
+      call bootstrap.bat
+      call build_w32.bat
+      for /f "usebackq tokens=3" %%l in (`findstr VERSION src\\config.h.W32`) do for /f "delims=" %%x in (%%l) do echo "##vso[task.setvariable variable=BuildTitle]%%x"
+    displayName: Build
+
+#  - task: PublishPipelineArtifact@1
+#   inputs:
+#     targetPath: '$(System.DefaultWorkingDirectory)/WinRel/gnumake.exe
+#      artifact: 'binary'
+#      publishLocation: 'pipeline'
+  - task: GitHubRelease@0
+    inputs:
+      gitHubConnection: github.com_amoldeshpande
+      repositoryName: $(Build.Repository.Name) 
+      tagSource: 'manual' 
+      tag: $(Build.BuildNumber) 
+      assets: $(System.DefaultWorkingDirectory)/WinRel/gnumake.exe
+      title: $(BuildTitle)
